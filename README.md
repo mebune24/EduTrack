@@ -1,2 +1,2 @@
 # EduTrack
-schoolfess management we platefrom
+schoolfees management we platefrom
