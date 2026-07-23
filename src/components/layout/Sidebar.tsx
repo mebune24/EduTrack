@@ -1,5 +1,5 @@
 
-import { Home, Users, FileText, CheckSquare, CreditCard, Award, Calendar, MessageSquare, Settings } from 'lucide-react';
+import { Home, Users, FileText, CheckSquare, CreditCard, Award, Calendar, MessageSquare, Settings, BookOpen } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { useAuth } from '../../contexts/AuthContext';

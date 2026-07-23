@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { ErrorBoundary } from './ErrorBoundary';
+import { ErrorBoundary } from '../error/ErrorBoundary';
 
 interface SectionProps {
   children: ReactNode;
