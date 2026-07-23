@@ -1,37 +1,9 @@
-import { useState } from 'react';
-import { CreditCard, CheckCircle2, Clock, Smartphone, Banknote, Wallet } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { CreditCard, CheckCircle2, Clock, Smartphone, Banknote, Wallet, Loader2 } from 'lucide-react';
 import type { FeeStructure, PaymentMethod, PaymentTransaction } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
-
-// Seed data — would be fetched from Firestore based on logged-in student's class
-const MOCK_FEE: FeeStructure = {
-  id: 'form1-2526-t1',
-  classId: 'form1',
-  academicYear: '2025/2026',
-  term: 'Term 1',
-  items: [
-    { id: 'f1', label: 'Tuition Fee', amount: 75000 },
-    { id: 'f2', label: 'PTA Levy', amount: 10000 },
-    { id: 'f3', label: 'ICT Fee', amount: 5000 },
-    { id: 'f4', label: 'Medical/Sports', amount: 5000 },
-  ],
-  totalAmount: 95000,
-};
-
-const MOCK_TRANSACTIONS: PaymentTransaction[] = [
-  {
-    id: 'txn1',
-    studentId: 'demo',
-    studentName: 'Demo Student',
-    feeStructureId: 'form1-2526-t1',
-    amountPaid: 50000,
-    method: 'momo',
-    status: 'confirmed',
-    reference: 'MM-2026-001234',
-    paidAt: '2026-07-01T10:30:00Z',
-    confirmedAt: '2026-07-01T10:31:00Z',
-  },
-];
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 
 function formatCFA(amount: number) {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', minimumFractionDigits: 0 }).format(amount);
@@ -46,15 +18,58 @@ const METHOD_CONFIG: Record<PaymentMethod, { label: string; icon: React.ReactNod
 
 export function StudentFeeView() {
   const { user } = useAuth();
-  const [transactions, setTransactions] = useState<PaymentTransaction[]>(MOCK_TRANSACTIONS);
+  const [feeStructure, setFeeStructure] = useState<FeeStructure | null>(null);
+  const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showPayModal, setShowPayModal] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
   const [payAmount, setPayAmount] = useState<number>(0);
   const [phone, setPhone] = useState('');
   const [payStep, setPayStep] = useState<'select' | 'confirm' | 'processing' | 'success'>('select');
 
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user?.id) return;
+      try {
+        setLoading(true);
+        const [paymentsSnap, usersSnap] = await Promise.all([
+          getDocs(query(collection(db, 'payments'), where('studentId', '==', user.id))),
+          getDocs(query(collection(db, 'users'), where('__name__', '==', user.id))),
+        ]);
+
+        const txns: PaymentTransaction[] = [];
+        paymentsSnap.forEach(doc => {
+          txns.push({ id: doc.id, ...doc.data() } as PaymentTransaction);
+        });
+        setTransactions(txns);
+
+        let userClassId: string | undefined;
+        usersSnap.forEach(doc => {
+          const data = doc.data();
+          userClassId = data.classId;
+        });
+
+        if (userClassId) {
+          const feeSnaps = await getDocs(collection(db, 'feeStructures'));
+          let matched: FeeStructure | null = null;
+          feeSnaps.forEach(doc => {
+            const fee = { id: doc.id, ...doc.data() } as FeeStructure;
+            if (fee.classId === userClassId) matched = fee;
+          });
+          setFeeStructure(matched);
+        }
+      } catch (err) {
+        console.error("Error fetching fee data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [user?.id]);
+
   const totalPaid = transactions.filter(t => t.status === 'confirmed').reduce((sum, t) => sum + t.amountPaid, 0);
-  const balance = MOCK_FEE.totalAmount - totalPaid;
+  const totalFee = feeStructure?.totalAmount || 0;
+  const balance = totalFee - totalPaid;
 
   const openPay = () => {
     setPayAmount(balance);
@@ -66,14 +81,12 @@ export function StudentFeeView() {
 
   const handlePay = async () => {
     setPayStep('processing');
-    // Simulate async payment confirmation delay
-    await new Promise(res => setTimeout(res, 2000));
+    await new Promise(res => setTimeout(res, 1500));
 
-    const newTxn: PaymentTransaction = {
-      id: `txn-${Date.now()}`,
+    const newTxn: Omit<PaymentTransaction, 'id'> = {
       studentId: user?.id || 'demo',
       studentName: `${user?.firstName || 'Student'} ${user?.lastName || ''}`.trim(),
-      feeStructureId: MOCK_FEE.id,
+      feeStructureId: feeStructure.id,
       amountPaid: payAmount,
       method: selectedMethod!,
       status: 'confirmed',
@@ -82,24 +95,32 @@ export function StudentFeeView() {
       confirmedAt: new Date().toISOString(),
     };
 
-    setTransactions(prev => [...prev, newTxn]);
-    setPayStep('success');
+    try {
+      const { addDoc, collection } = await import('firebase/firestore');
+      const ref = await addDoc(collection(db, 'payments'), newTxn);
+      setTransactions(prev => [...prev, { ...newTxn, id: ref.id }]);
+      setPayStep('success');
+    } catch (err) {
+      console.error('Error recording payment:', err);
+      setPayStep('select');
+    }
   };
 
-  const balanceColor = balance <= 0 ? 'text-green-600' : balance < MOCK_FEE.totalAmount / 2 ? 'text-amber-600' : 'text-red-600';
+  if (loading) return <div className="p-8 text-center text-slate-500">Loading fee details…</div>;
+  if (!feeStructure) return <div className="p-8 text-center text-slate-500">No fee structure assigned yet.</div>;
 
   return (
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-800">Fees & Payments</h1>
-        <p className="text-slate-600">{MOCK_FEE.academicYear} · {MOCK_FEE.term} · {MOCK_FEE.classId.toUpperCase()}</p>
+        <p className="text-slate-600">{feeStructure.academicYear} · {feeStructure.term} · {feeStructure.classId.toUpperCase()}</p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
           <p className="text-sm text-slate-500 mb-1">Total Fee</p>
-          <p className="text-2xl font-bold text-slate-800">{formatCFA(MOCK_FEE.totalAmount)}</p>
+          <p className="text-2xl font-bold text-slate-800">{formatCFA(feeStructure.totalAmount)}</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
           <p className="text-sm text-slate-500 mb-1">Total Paid</p>
@@ -107,7 +128,7 @@ export function StudentFeeView() {
         </div>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
           <p className="text-sm text-slate-500 mb-1">Outstanding Balance</p>
-          <p className={`text-2xl font-bold ${balanceColor}`}>{formatCFA(Math.max(balance, 0))}</p>
+          <p className={`text-2xl font-bold ${balance <= 0 ? 'text-green-600' : balance < totalFee / 2 ? 'text-amber-600' : 'text-red-600'}`}>{formatCFA(Math.max(balance, 0))}</p>
         </div>
       </div>
 
@@ -131,7 +152,7 @@ export function StudentFeeView() {
             )}
           </div>
           <div className="p-4 divide-y divide-slate-50">
-            {MOCK_FEE.items.map(item => (
+            {feeStructure.items.map(item => (
               <div key={item.id} className="flex justify-between py-3 text-sm">
                 <span className="text-slate-700">{item.label}</span>
                 <span className="font-medium text-slate-900">{formatCFA(item.amount)}</span>
@@ -139,7 +160,7 @@ export function StudentFeeView() {
             ))}
             <div className="flex justify-between py-3 font-bold text-sm">
               <span className="text-slate-800">Total</span>
-              <span className="text-primary">{formatCFA(MOCK_FEE.totalAmount)}</span>
+              <span className="text-primary">{formatCFA(feeStructure.totalAmount)}</span>
             </div>
           </div>
         </div>

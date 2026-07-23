@@ -1,117 +1,72 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer,
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   BarChart, Bar
 } from 'recharts';
-import { Award, TrendingUp, Medal, BookOpen, ChevronDown } from 'lucide-react';
+import { Award, TrendingUp, Medal, BookOpen, ChevronDown, Loader2 } from 'lucide-react';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
+import { useAuth } from '../../contexts/AuthContext';
 import type { StudentResult } from '../../types';
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-const MOCK_TERMS: StudentResult[] = [
-  {
-    id: 'r1',
-    studentId: 'demo',
-    studentName: 'Alice Mbah',
-    classId: 'form1', streamId: 'a',
-    academicYear: '2025/2026', term: 'Term 1',
-    scores: [
-      {
-        subjectId: 's1', subjectName: 'Mathematics', caScore: 25, examScore: 58, total: 83, grade: 'A', remark: 'Excellent',
-        subject: undefined
-      },
-      {
-        subjectId: 's2', subjectName: 'English Language', caScore: 22, examScore: 54, total: 76, grade: 'B', remark: 'Very Good',
-        subject: undefined
-      },
-      {
-        subjectId: 's3', subjectName: 'Physics', caScore: 20, examScore: 50, total: 70, grade: 'B', remark: 'Very Good',
-        subject: undefined
-      },
-      {
-        subjectId: 's4', subjectName: 'Chemistry', caScore: 18, examScore: 46, total: 64, grade: 'C', remark: 'Good',
-        subject: undefined
-      },
-      {
-        subjectId: 's5', subjectName: 'Biology', caScore: 24, examScore: 55, total: 79, grade: 'B', remark: 'Very Good',
-        subject: undefined
-      },
-      {
-        subjectId: 's6', subjectName: 'French', caScore: 20, examScore: 48, total: 68, grade: 'C', remark: 'Good',
-        subject: undefined
-      },
-    ],
-    totalMarks: 440, average: 73.3, rank: 2, totalStudents: 35,
-    status: 'published', createdAt: '2026-01-10T08:00:00Z', publishedAt: '2026-01-20T10:00:00Z',
-  },
-  {
-    id: 'r2',
-    studentId: 'demo',
-    studentName: 'Alice Mbah',
-    classId: 'form1', streamId: 'a',
-    academicYear: '2025/2026', term: 'Term 2',
-    scores: [
-      {
-        subjectId: 's1', subjectName: 'Mathematics', caScore: 27, examScore: 62, total: 89, grade: 'A', remark: 'Excellent',
-        subject: undefined
-      },
-      {
-        subjectId: 's2', subjectName: 'English Language', caScore: 24, examScore: 58, total: 82, grade: 'A', remark: 'Excellent',
-        subject: undefined
-      },
-      {
-        subjectId: 's3', subjectName: 'Physics', caScore: 22, examScore: 55, total: 77, grade: 'B', remark: 'Very Good',
-        subject: undefined
-      },
-      {
-        subjectId: 's4', subjectName: 'Chemistry', caScore: 21, examScore: 50, total: 71, grade: 'B', remark: 'Very Good',
-        subject: undefined
-      },
-      {
-        subjectId: 's5', subjectName: 'Biology', caScore: 25, examScore: 60, total: 85, grade: 'A', remark: 'Excellent',
-        subject: undefined
-      },
-      {
-        subjectId: 's6', subjectName: 'French', caScore: 22, examScore: 52, total: 74, grade: 'B', remark: 'Very Good',
-        subject: undefined
-      },
-    ],
-    totalMarks: 478, average: 79.7, rank: 1, totalStudents: 35,
-    status: 'published', createdAt: '2026-04-10T08:00:00Z', publishedAt: '2026-04-20T10:00:00Z',
-  },
-];
-
-const GRADE_COLORS: Record<string, string> = {
-  A: 'bg-green-100 text-green-800',
-  B: 'bg-blue-100 text-blue-800',
-  C: 'bg-amber-100 text-amber-800',
-  D: 'bg-orange-100 text-orange-800',
-  E: 'bg-red-100 text-red-700',
-  F: 'bg-red-200 text-red-900',
-};
-
-const trendData = MOCK_TERMS.map(r => ({
-  term: r.term,
-  average: r.average,
-  rank: r.rank,
-}));
-
 export function StudentResultView() {
-  const [selectedTermId, setSelectedTermId] = useState(MOCK_TERMS[MOCK_TERMS.length - 1].id);
-  const result = MOCK_TERMS.find(r => r.id === selectedTermId) ?? MOCK_TERMS[0];
+  const { user } = useAuth();
+  const [results, setResults] = useState<StudentResult[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTermId, setSelectedTermId] = useState<string>('');
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (!user?.id) return;
+      try {
+        setLoading(true);
+        const q = query(
+          collection(db, 'results'),
+          where('studentId', '==', user.id),
+          where('status', '==', 'published')
+        );
+        const snapshot = await getDocs(q);
+        const data: StudentResult[] = [];
+        snapshot.forEach(doc => {
+          data.push({ id: doc.id, ...doc.data() } as StudentResult);
+        });
+        setResults(data);
+        if (data.length > 0) {
+          setSelectedTermId(data[0].id!);
+        }
+      } catch (err) {
+        console.error("Error fetching results:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchResults();
+  }, [user?.id]);
+
+  const result = results.find(r => r.id === selectedTermId) ?? results[0];
 
   // Radar data – subject averages
+  if (loading) return <div className="p-8 text-center text-slate-500">Loading results…</div>;
+  if (!result) return <div className="p-8 text-center text-slate-500">No published results yet.</div>;
+
   const radarData = result.scores.map(s => ({
     subject: s.subjectName.split(' ')[0],
     score: s.total,
     fullMark: 100,
   }));
 
-  // Bar chart data for subject breakdown (CA vs Exam)
   const barData = result.scores.map(s => ({
     name: s.subjectName.split(' ')[0],
     CA: s.caScore,
     Exam: s.examScore,
+  }));
+
+  const termResults = results.filter(r => r.status === 'published');
+  const trendData = termResults.map(r => ({
+    term: r.term,
+    average: r.average,
+    rank: r.rank,
   }));
 
   return (

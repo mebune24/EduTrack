@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Save, Send, Plus, Trash2, Loader2 } from 'lucide-react';
 import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { useAuth } from '../../contexts/AuthContext';
 import type { StudentRegistration, StudentResult } from '../../types';
 
 // Grading logic (GCE Cameroon style)
@@ -26,6 +27,7 @@ interface ScoreRow {
 }
 
 export function ScoreEntry() {
+  const { user } = useAuth();
   const [subjects, setSubjects] = useState<string[]>(DEFAULT_SUBJECTS);
   const [newSubject, setNewSubject] = useState('');
   const [selectedClass, setSelectedClass] = useState('form1');
@@ -38,70 +40,67 @@ export function ScoreEntry() {
 
   const [scoreRows, setScoreRows] = useState<ScoreRow[]>([]);
 
-  // Fetch students and existing results
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        // Fetch active students in class
-        const studentsQ = query(
-          collection(db, 'registrations'),
-          where('status', '==', 'active'),
-          where('classAppliedFor', '==', selectedClass)
-        );
-        const studentSnap = await getDocs(studentsQ);
-        const students = studentSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as StudentRegistration));
+    // Fetch students and existing results
+    useEffect(() => {
+      const fetchData = async () => {
+        setLoading(true);
+        try {
+          const studentsQ = query(
+            collection(db, 'registrations'),
+            where('status', '==', 'active'),
+            where('classAppliedFor', '==', selectedClass)
+          );
+          const studentSnap = await getDocs(studentsQ);
+          const students = studentSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as StudentRegistration));
 
-        // Fetch existing results for this class and term
-        const resultsQ = query(
-          collection(db, 'results'),
-          where('classId', '==', selectedClass),
-          where('term', '==', selectedTerm),
-          where('academicYear', '==', academicYear)
-        );
-        const resultsSnap = await getDocs(resultsQ);
-        const resultsMap = new Map<string, StudentResult>();
-        resultsSnap.forEach(doc => {
-          const res = doc.data() as StudentResult;
-          resultsMap.set(res.studentId, res);
-        });
-
-        const rows: ScoreRow[] = students.map(student => {
-          const studentId = student.id || `anon-${Math.random()}`;
-          const existingResult = resultsMap.get(studentId);
-          const initialScores: Record<string, { ca: number; exam: number }> = {};
-          
-          if (existingResult) {
-            existingResult.scores.forEach(s => {
-              initialScores[s.subjectName] = { ca: s.caScore, exam: s.examScore };
-              if (!subjects.includes(s.subjectName)) {
-                setSubjects(prev => [...prev, s.subjectName]);
-              }
-            });
-          }
-          
-          // Fill missing subjects with 0
-          subjects.forEach(sub => {
-            if (!initialScores[sub]) initialScores[sub] = { ca: 0, exam: 0 };
+          const resultsQ = query(
+            collection(db, 'results'),
+            where('classId', '==', selectedClass),
+            where('term', '==', selectedTerm),
+            where('academicYear', '==', academicYear)
+          );
+          const resultsSnap = await getDocs(resultsQ);
+          const resultsMap = new Map<string, StudentResult>();
+          resultsSnap.forEach(doc => {
+            const res = doc.data() as StudentResult;
+            resultsMap.set(res.studentId, res);
           });
 
-          return {
-            studentId,
-            studentName: `${student.firstName} ${student.lastName}`.trim(),
-            scores: initialScores,
-          };
-        });
+          const rows: ScoreRow[] = students.map(student => {
+            const studentId = student.id || `anon-${Math.random()}`;
+            const existingResult = resultsMap.get(studentId);
+            const initialScores: Record<string, { ca: number; exam: number }> = {};
+            
+            if (existingResult) {
+              existingResult.scores.forEach(s => {
+                initialScores[s.subjectName] = { ca: s.caScore, exam: s.examScore };
+                if (!subjects.includes(s.subjectName)) {
+                  setSubjects(prev => [...prev, s.subjectName]);
+                }
+              });
+            }
+            
+            subjects.forEach(sub => {
+              if (!initialScores[sub]) initialScores[sub] = { ca: 0, exam: 0 };
+            });
 
-        setScoreRows(rows);
-      } catch (err) {
-        console.error("Error fetching students/results:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+            return {
+              studentId,
+              studentName: `${student.firstName} ${student.lastName}`.trim(),
+              scores: initialScores,
+            };
+          });
 
-    fetchData();
-  }, [selectedClass, selectedTerm, academicYear]);
+          setScoreRows(rows);
+        } catch (err) {
+          console.error("Error fetching students/results:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchData();
+    }, [selectedClass, selectedTerm, academicYear]);
 
   const updateScore = (studentId: string, subject: string, field: 'ca' | 'exam', value: number) => {
     setScoreRows(prev =>
@@ -165,12 +164,13 @@ export function ScoreEntry() {
           studentId: row.studentId,
           studentName: row.studentName,
           classId: selectedClass,
-          streamId: 'a', // Hardcoded for now, normally selected or fetched
+          streamId: 'a',
           academicYear,
           term: selectedTerm,
           scores: resultScores,
           totalMarks,
           average,
+          teacherId: user?.id || '',
           status: publish ? 'published' : 'draft',
           createdAt: new Date().toISOString()
         };
@@ -207,6 +207,8 @@ export function ScoreEntry() {
           <option value="form1">Form 1</option>
           <option value="form2">Form 2</option>
           <option value="form3">Form 3</option>
+          <option value="form4">Form 4</option>
+          <option value="form5">Form 5</option>
           <option value="l6">Lower Sixth</option>
           <option value="u6">Upper Sixth</option>
         </select>

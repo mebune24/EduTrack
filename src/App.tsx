@@ -34,13 +34,14 @@ function App() {
             <Route path="apply" element={<StudentRegistrationForm />} />
             
             {/* Admin Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['admin', 'teacher', 'bursar']} />}>
+            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
               <Route path="approvals" element={<RegistrationApprovals />} />
               <Route path="classes" element={<ClassManagement />} />
-              <Route path="classes/:classId/streams/:streamId" element={<ClassRegister />} />
             </Route>
 
-            <Route path="students" element={<div className="p-4">Students Placeholder</div>} />
+            <Route path="students" element={<div className="p-4">Students Placeholder</div> />}
+            <Route element={<ProtectedRoute allowedRoles={['admin', 'bursar']} />}>
+              <Route path="classes/:classId/streams/:streamId" element={<ClassRegister />} />
             {/* Admin-only Routes */}
             <Route element={<ProtectedRoute allowedRoles={['admin', 'bursar']} />}>
               <Route path="fee-structures" element={<FeeStructureAdmin />} />

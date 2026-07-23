@@ -8,6 +8,7 @@ export interface User {
   firstName: string;
   lastName: string;
   status: StudentStatus;
+  classId?: string;
 }
 
 export interface StudentRegistration {
@@ -108,6 +109,7 @@ export interface StudentResult {
   average: number;
   rank?: number;
   totalStudents?: number;
+  teacherId: string;
   status: ResultStatus;
   createdAt: string;
   publishedAt?: string;
@@ -123,6 +125,7 @@ export interface TimetableSlot {
   endTime: string;   // e.g. '09:00'
   subject: string;
   teacherName: string;
+  teacherId: string;
   room?: string;
 }
 

@@ -248,6 +248,8 @@ export function Login() {
                   <option value="parent">Parent</option>
                   <option value="student">Student</option>
                   <option value="teacher">Teacher</option>
+                  <option value="bursar">Bursar</option>
+                  <option value="admin">Admin</option>
                 </select>
               </div>
               <div>

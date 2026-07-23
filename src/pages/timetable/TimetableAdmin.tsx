@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, Trash2, Save, Clock } from 'lucide-react';
 import type { Weekday, TimetableSlot } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 
 const DAYS: Weekday[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -30,52 +31,57 @@ const SUBJECT_COLORS: Record<string, string> = {
 };
 
 const SEED_SLOTS: TimetableSlot[] = [
-  { id: '1', day: 'Monday', startTime: '07:30', endTime: '09:00', subject: 'Mathematics', teacherName: 'Mr. Tchamba', room: 'R101' },
-  { id: '2', day: 'Monday', startTime: '09:00', endTime: '10:30', subject: 'English Language', teacherName: 'Mrs. Abah', room: 'R102' },
-  { id: '3', day: 'Monday', startTime: '10:30', endTime: '11:00', subject: 'Break', teacherName: '', room: '' },
-  { id: '4', day: 'Monday', startTime: '11:00', endTime: '12:30', subject: 'Physics', teacherName: 'Mr. Ndeh', room: 'Lab 1' },
-  { id: '5', day: 'Tuesday', startTime: '07:30', endTime: '09:00', subject: 'French', teacherName: 'Ms. Ngono', room: 'R103' },
-  { id: '6', day: 'Tuesday', startTime: '09:00', endTime: '10:30', subject: 'Chemistry', teacherName: 'Mr. Fon', room: 'Lab 2' },
-  { id: '7', day: 'Tuesday', startTime: '10:30', endTime: '11:00', subject: 'Break', teacherName: '', room: '' },
-  { id: '8', day: 'Tuesday', startTime: '11:00', endTime: '12:30', subject: 'Biology', teacherName: 'Mrs. Kemba', room: 'R104' },
-  { id: '9', day: 'Wednesday', startTime: '07:30', endTime: '09:00', subject: 'History', teacherName: 'Mr. Bih', room: 'R105' },
-  { id: '10', day: 'Wednesday', startTime: '09:00', endTime: '10:30', subject: 'Geography', teacherName: 'Ms. Tabi', room: 'R106' },
-  { id: '11', day: 'Thursday', startTime: '07:30', endTime: '09:00', subject: 'ICT', teacherName: 'Mr. Ngu', room: 'Lab 3' },
-  { id: '12', day: 'Thursday', startTime: '09:00', endTime: '10:30', subject: 'Mathematics', teacherName: 'Mr. Tchamba', room: 'R101' },
-  { id: '13', day: 'Friday', startTime: '07:30', endTime: '09:00', subject: 'Physical Education', teacherName: 'Mr. Mbarga', room: 'Field' },
-  { id: '14', day: 'Friday', startTime: '09:00', endTime: '10:30', subject: 'English Language', teacherName: 'Mrs. Abah', room: 'R102' },
+  { id: '1', day: 'Monday', startTime: '07:30', endTime: '09:00', subject: 'Mathematics', teacherName: 'Mr. Tchamba', teacherId: 'teacher-1', room: 'R101' },
+  { id: '2', day: 'Monday', startTime: '09:00', endTime: '10:30', subject: 'English Language', teacherName: 'Mrs. Abah', teacherId: 'teacher-2', room: 'R102' },
+  { id: '3', day: 'Monday', startTime: '10:30', endTime: '11:00', subject: 'Break', teacherName: '', teacherId: '', room: '' },
+  { id: '4', day: 'Monday', startTime: '11:00', endTime: '12:30', subject: 'Physics', teacherName: 'Mr. Ndeh', teacherId: 'teacher-3', room: 'Lab 1' },
+  { id: '5', day: 'Tuesday', startTime: '07:30', endTime: '09:00', subject: 'French', teacherName: 'Ms. Ngono', teacherId: 'teacher-4', room: 'R103' },
+  { id: '6', day: 'Tuesday', startTime: '09:00', endTime: '10:30', subject: 'Chemistry', teacherName: 'Mr. Fon', teacherId: 'teacher-5', room: 'Lab 2' },
+  { id: '7', day: 'Tuesday', startTime: '10:30', endTime: '11:00', subject: 'Break', teacherName: '', teacherId: '', room: '' },
+  { id: '8', day: 'Tuesday', startTime: '11:00', endTime: '12:30', subject: 'Biology', teacherName: 'Mrs. Kemba', teacherId: 'teacher-6', room: 'R104' },
+  { id: '9', day: 'Wednesday', startTime: '07:30', endTime: '09:00', subject: 'History', teacherName: 'Mr. Bih', teacherId: 'teacher-7', room: 'R105' },
+  { id: '10', day: 'Wednesday', startTime: '09:00', endTime: '10:30', subject: 'Geography', teacherName: 'Ms. Tabi', teacherId: 'teacher-8', room: 'R106' },
+  { id: '11', day: 'Thursday', startTime: '07:30', endTime: '09:00', subject: 'ICT', teacherName: 'Mr. Ngu', teacherId: 'teacher-9', room: 'Lab 3' },
+  { id: '12', day: 'Thursday', startTime: '09:00', endTime: '10:30', subject: 'Mathematics', teacherName: 'Mr. Tchamba', teacherId: 'teacher-1', room: 'R101' },
+  { id: '13', day: 'Friday', startTime: '07:30', endTime: '09:00', subject: 'Physical Education', teacherName: 'Mr. Mbarga', teacherId: 'teacher-10', room: 'Field' },
+  { id: '14', day: 'Friday', startTime: '09:00', endTime: '10:30', subject: 'English Language', teacherName: 'Mrs. Abah', teacherId: 'teacher-2', room: 'R102' },
 ];
 
-const emptySlot = (): Omit<TimetableSlot, 'id'> => ({
+const emptySlot = (teacherId: string, teacherName: string): Omit<TimetableSlot, 'id'> => ({
   day: 'Monday',
   startTime: '07:30',
   endTime: '09:00',
   subject: 'Mathematics',
-  teacherName: '',
+  teacherName,
+  teacherId,
   room: '',
 });
 
 export function TimetableAdmin() {
+  const { user } = useAuth();
   const [slots, setSlots] = useState<TimetableSlot[]>(SEED_SLOTS);
   const [selectedClass, setSelectedClass] = useState('form1');
   const [selectedStream, setSelectedStream] = useState('a');
   const [editingSlot, setEditingSlot] = useState<TimetableSlot | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [draft, setDraft] = useState<Omit<TimetableSlot, 'id'>>(emptySlot());
+  const [draft, setDraft] = useState<Omit<TimetableSlot, 'id'>>(emptySlot(user?.id || '', user?.firstName ? `${user.firstName} ${user.lastName}` : ''));
   const [savedMsg, setSavedMsg] = useState(false);
 
+  const isAdmin = user?.role === 'admin';
+  const visibleSlots = isAdmin ? slots : slots.filter(s => s.teacherId === user?.id);
+
   const slotsForDay = (day: Weekday) =>
-    slots.filter(s => s.day === day).sort((a, b) => a.startTime.localeCompare(b.startTime));
+    visibleSlots.filter(s => s.day === day).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   const openAdd = () => {
     setEditingSlot(null);
-    setDraft(emptySlot());
+    setDraft(emptySlot(user?.id || '', user?.firstName ? `${user.firstName} ${user.lastName}` : ''));
     setShowModal(true);
   };
 
   const openEdit = (slot: TimetableSlot) => {
     setEditingSlot(slot);
-    setDraft({ day: slot.day, startTime: slot.startTime, endTime: slot.endTime, subject: slot.subject, teacherName: slot.teacherName, room: slot.room });
+    setDraft({ day: slot.day, startTime: slot.startTime, endTime: slot.endTime, subject: slot.subject, teacherName: slot.teacherName, teacherId: slot.teacherId, room: slot.room });
     setShowModal(true);
   };
 

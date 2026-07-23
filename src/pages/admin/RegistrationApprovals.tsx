@@ -31,13 +31,25 @@ export function RegistrationApprovals() {
     fetchPendingRegistrations();
   }, []);
 
-  const handleApprove = async (id: string) => {
+  const handleApprove = async (id: string, reg: StudentRegistration) => {
     try {
-      // Note: A real app might trigger a Cloud Function here to generate the Matricule 
-      // and send an approval email. For now, we update the status directly.
       const docRef = doc(db, 'registrations', id);
-      await updateDoc(docRef, { status: 'active' });
-      // Remove from list
+      await updateDoc(docRef, { 
+        status: 'active',
+        matricule: reg.matricule || `MAT-${Date.now().toString().slice(-6)}`
+      });
+
+      // If the student registered an account, update their classId
+      const userQuery = query(collection(db, 'users'), where('email', '==', reg.parentEmail));
+      const userSnap = await getDocs(userQuery);
+      if (!userSnap.empty) {
+        const userData = userSnap.docs[0];
+        await updateDoc(userData.ref, { 
+          classId: reg.classAppliedFor,
+          status: 'active'
+        });
+      }
+
       setRegistrations(registrations.filter(r => r.id !== id));
     } catch (err) {
       console.error("Error approving", err);
@@ -48,7 +60,7 @@ export function RegistrationApprovals() {
   const handleReject = async (id: string) => {
     try {
       const docRef = doc(db, 'registrations', id);
-      await updateDoc(docRef, { status: 'suspended' }); // Or 'rejected' if we add it to types
+      await updateDoc(docRef, { status: 'suspended' });
       setRegistrations(registrations.filter(r => r.id !== id));
     } catch (err) {
       console.error("Error rejecting", err);
@@ -104,7 +116,7 @@ export function RegistrationApprovals() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         <button
-                          onClick={() => handleApprove(reg.id!)}
+                          onClick={() => handleApprove(reg.id!, reg)}
                           className="p-1.5 bg-green-100 text-green-700 hover:bg-green-200 rounded-md transition-colors"
                           title="Approve"
                         >

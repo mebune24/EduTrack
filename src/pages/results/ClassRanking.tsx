@@ -53,7 +53,11 @@ export function ClassRanking() {
           <select className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white" value={selectedClass} onChange={e => setSelectedClass(e.target.value)}>
             <option value="form1">Form 1</option>
             <option value="form2">Form 2</option>
+            <option value="form3">Form 3</option>
+            <option value="form4">Form 4</option>
+            <option value="form5">Form 5</option>
             <option value="l6">Lower Sixth</option>
+            <option value="u6">Upper Sixth</option>
           </select>
           <select className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white" value={selectedTerm} onChange={e => setSelectedTerm(e.target.value)}>
             <option>Term 1</option>

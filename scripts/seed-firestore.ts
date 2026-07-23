@@ -49,12 +49,12 @@ async function seed() {
 
   // ─── USERS ────────────────────────────────────────────────────────────────
   const users = [
-    { firstName: 'Admin', lastName: 'User', email: 'admin@edutrack.com', role: 'admin', status: 'active' },
-    { firstName: 'Bursar', lastName: 'User', email: 'bursar@edutrack.com', role: 'bursar', status: 'active' },
-    { firstName: 'Registrar', lastName: 'User', email: 'registrar@edutrack.com', role: 'teacher', status: 'active' },
-    { firstName: 'Teacher', lastName: 'User', email: 'teacher@edutrack.com', role: 'teacher', status: 'active' },
-    { firstName: 'Parent', lastName: 'User', email: 'parent@edutrack.com', role: 'parent', status: 'active' },
-    { firstName: 'John', lastName: 'Doe', email: 'student@edutrack.com', role: 'student', status: 'active' },
+    { firstName: 'Admin', lastName: 'User', email: 'admin@edutrack.com', role: 'admin', status: 'active', classId: '' },
+    { firstName: 'Bursar', lastName: 'User', email: 'bursar@edutrack.com', role: 'bursar', status: 'active', classId: '' },
+    { firstName: 'Registrar', lastName: 'User', email: 'registrar@edutrack.com', role: 'teacher', status: 'active', classId: '' },
+    { firstName: 'Teacher', lastName: 'User', email: 'teacher@edutrack.com', role: 'teacher', status: 'active', classId: '' },
+    { firstName: 'Parent', lastName: 'User', email: 'parent@edutrack.com', role: 'parent', status: 'active', classId: '' },
+    { firstName: 'John', lastName: 'Doe', email: 'student@edutrack.com', role: 'student', status: 'active', classId: 'form1' },
   ];
 
   const userIds: Record<string, string> = {};
@@ -186,6 +186,7 @@ async function seed() {
       average: 73.3,
       rank: 2,
       totalStudents: 45,
+      teacherId: userIds['teacher@edutrack.com'],
       status: 'published',
       createdAt: serverTimestamp(),
       publishedAt: serverTimestamp(),
@@ -203,6 +204,7 @@ async function seed() {
       ],
       totalMarks: 123,
       average: 61.5,
+      teacherId: userIds['teacher@edutrack.com'],
       status: 'draft',
       createdAt: serverTimestamp(),
     },
@@ -239,9 +241,9 @@ async function seed() {
     streamId: 'A',
     academicYear: '2025/2026',
     slots: [
-      { id: '1', day: 'Monday', startTime: '08:00', endTime: '09:00', subject: 'Mathematics', teacherName: 'Mr. Kamga', room: 'Room 101' },
-      { id: '2', day: 'Monday', startTime: '09:00', endTime: '10:00', subject: 'English', teacherName: 'Ms. Fong', room: 'Room 102' },
-      { id: '3', day: 'Tuesday', startTime: '08:00', endTime: '09:00', subject: 'Science', teacherName: 'Mr. Nkeng', room: 'Lab 1' },
+      { id: '1', day: 'Monday', startTime: '08:00', endTime: '09:00', subject: 'Mathematics', teacherName: 'Mr. Kamga', teacherId: userIds['teacher@edutrack.com'], room: 'Room 101' },
+      { id: '2', day: 'Monday', startTime: '09:00', endTime: '10:00', subject: 'English', teacherName: 'Ms. Fong', teacherId: userIds['teacher@edutrack.com'], room: 'Room 102' },
+      { id: '3', day: 'Tuesday', startTime: '08:00', endTime: '09:00', subject: 'Science', teacherName: 'Mr. Nkeng', teacherId: userIds['teacher@edutrack.com'], room: 'Lab 1' },
     ],
     updatedAt: serverTimestamp(),
   };

@@ -22,7 +22,52 @@ const initialClasses: SchoolClass[] = [
       { id: '2a', name: 'A', capacity: 40 },
       { id: '2b', name: 'B', capacity: 40 },
     ]
-  }
+  },
+  {
+    id: 'form3',
+    category: 'Form 3',
+    level: 3,
+    streams: [
+      { id: '3a', name: 'A', capacity: 40 },
+      { id: '3b', name: 'B', capacity: 40 },
+    ]
+  },
+  {
+    id: 'form4',
+    category: 'Form 4',
+    level: 4,
+    streams: [
+      { id: '4a', name: 'A', capacity: 40 },
+      { id: '4b', name: 'B', capacity: 40 },
+    ]
+  },
+  {
+    id: 'form5',
+    category: 'Form 5',
+    level: 5,
+    streams: [
+      { id: '5a', name: 'A', capacity: 40 },
+      { id: '5b', name: 'B', capacity: 40 },
+    ]
+  },
+  {
+    id: 'l6',
+    category: 'Lower Sixth',
+    level: 6,
+    streams: [
+      { id: 'l6a', name: 'A', capacity: 35 },
+      { id: 'l6b', name: 'B', capacity: 35 },
+    ]
+  },
+  {
+    id: 'u6',
+    category: 'Upper Sixth',
+    level: 7,
+    streams: [
+      { id: 'u6a', name: 'A', capacity: 35 },
+      { id: 'u6b', name: 'B', capacity: 35 },
+    ]
+  },
 ];
 
 export function ClassManagement() {
