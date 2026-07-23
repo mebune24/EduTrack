@@ -4,6 +4,7 @@ import type { FeeStructure, PaymentMethod, PaymentTransaction } from '../../type
 import { useAuth } from '../../contexts/AuthContext';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db, sendNotification } from '../../lib/firebase';
+import { Section } from '../../components/loading/Section';
 
 function formatCFA(amount: number) {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', minimumFractionDigits: 0 }).format(amount);
@@ -21,6 +22,7 @@ export function StudentFeeView() {
   const [feeStructure, setFeeStructure] = useState<FeeStructure | null>(null);
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showPayModal, setShowPayModal] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
   const [payAmount, setPayAmount] = useState<number>(0);
@@ -32,10 +34,11 @@ export function StudentFeeView() {
       if (!user?.id) return;
       try {
         setLoading(true);
-      const [paymentsSnap, userDoc] = await Promise.all([
-        getDocs(query(collection(db, 'payments'), where('studentId', '==', user.id))),
-        getDoc(doc(db, 'users', user.id)),
-      ]);
+        setError(null);
+        const [paymentsSnap, userDoc] = await Promise.all([
+          getDocs(query(collection(db, 'payments'), where('studentId', '==', user.id))),
+          getDoc(doc(db, 'users', user.id)),
+        ]);
 
         const txns: PaymentTransaction[] = [];
         paymentsSnap.forEach(doc => {
@@ -57,6 +60,7 @@ export function StudentFeeView() {
         }
       } catch (err) {
         console.error("Error fetching fee data:", err);
+        setError("Failed to load fee details. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -121,30 +125,32 @@ export function StudentFeeView() {
   };
 
   if (loading) return <div className="p-8 text-center text-slate-500">Loading fee details…</div>;
+  if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
   if (!feeStructure) return <div className="p-8 text-center text-slate-500">No fee structure assigned yet.</div>;
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Fees & Payments</h1>
-        <p className="text-slate-600">{feeStructure.academicYear} · {feeStructure.term} · {feeStructure.classId.toUpperCase()}</p>
-      </div>
+    <Section sectionName="Fees & Payments" loading={loading} error={error} onRetry={() => {}}>
+      <div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-slate-800">Fees & Payments</h1>
+          <p className="text-slate-600">{feeStructure.academicYear} · {feeStructure.term} · {feeStructure.classId.toUpperCase()}</p>
+        </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-          <p className="text-sm text-slate-500 mb-1">Total Fee</p>
-          <p className="text-2xl font-bold text-slate-800">{formatCFA(feeStructure.totalAmount)}</p>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+            <p className="text-sm text-slate-500 mb-1">Total Fee</p>
+            <p className="text-2xl font-bold text-slate-800">{formatCFA(feeStructure.totalAmount)}</p>
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+            <p className="text-sm text-slate-500 mb-1">Total Paid</p>
+            <p className="text-2xl font-bold text-green-600">{formatCFA(totalPaid)}</p>
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+            <p className="text-sm text-slate-500 mb-1">Outstanding Balance</p>
+            <p className={`text-2xl font-bold ${balance <= 0 ? 'text-green-600' : balance < totalFee / 2 ? 'text-amber-600' : 'text-red-600'}`}>{formatCFA(Math.max(balance, 0))}</p>
+          </div>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-          <p className="text-sm text-slate-500 mb-1">Total Paid</p>
-          <p className="text-2xl font-bold text-green-600">{formatCFA(totalPaid)}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-          <p className="text-sm text-slate-500 mb-1">Outstanding Balance</p>
-          <p className={`text-2xl font-bold ${balance <= 0 ? 'text-green-600' : balance < totalFee / 2 ? 'text-amber-600' : 'text-red-600'}`}>{formatCFA(Math.max(balance, 0))}</p>
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Fee Breakdown */}
@@ -305,5 +311,6 @@ export function StudentFeeView() {
         </div>
       )}
     </div>
+    </Section>
   );
 }

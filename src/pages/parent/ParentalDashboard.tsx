@@ -12,6 +12,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import type { StudentRegistration, StudentResult, PaymentTransaction } from '../../types';
+import { Section } from '../../components/loading/Section';
 
 function formatCFA(n: number) {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', minimumFractionDigits: 0 }).format(n);
@@ -109,12 +110,13 @@ export function ParentalDashboard() {
   const balance = totalPaid > 0 ? 0 : 0; // Would need fee structure to calculate properly
 
   return (
-    <div>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Parent Dashboard</h1>
-          <p className="text-slate-600">Monitor your child's progress and school status.</p>
-        </div>
+    <Section sectionName="Parent Dashboard" loading={loading} error={null}>
+      <div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Parent Dashboard</h1>
+            <p className="text-slate-600">Monitor your child's progress and school status.</p>
+          </div>
 
         {/* Child selector */}
         {children.length > 1 && (
@@ -294,6 +296,7 @@ export function ParentalDashboard() {
           </button>
         ))}
       </div>
-    </div>
+      </div>
+    </Section>
   );
 }

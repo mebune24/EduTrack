@@ -4,6 +4,7 @@ import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firesto
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { StudentRegistration, StudentResult } from '../../types';
+import { Section } from '../../components/loading/Section';
 
 // Grading logic (GCE Cameroon style)
 function getGrade(total: number): { grade: string; remark: string } {
@@ -39,8 +40,7 @@ export function ScoreEntry() {
   const [savedMsg, setSavedMsg] = useState<'draft' | 'published' | null>(null);
 
   const [scoreRows, setScoreRows] = useState<ScoreRow[]>([]);
-
-    // Fetch students and existing results
+  const [error, setError] = useState<string | null>(null);
     useEffect(() => {
       const fetchData = async () => {
         setLoading(true);
@@ -94,6 +94,7 @@ export function ScoreEntry() {
           setScoreRows(rows);
         } catch (err) {
           console.error("Error fetching students/results:", err);
+          setError("Failed to load students or results.");
         } finally {
           setLoading(false);
         }
@@ -191,11 +192,12 @@ export function ScoreEntry() {
   };
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Score Entry</h1>
-        <p className="text-slate-600">Enter CA and exam scores for each student.</p>
-      </div>
+    <Section sectionName="Score Entry" loading={loading} error={error} onRetry={() => {}}>
+      <div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-slate-800">Score Entry</h1>
+          <p className="text-slate-600">Enter CA and exam scores for each student.</p>
+        </div>
 
       {/* Controls */}
       <div className="flex flex-wrap gap-3 mb-6">
@@ -343,5 +345,6 @@ export function ScoreEntry() {
         </button>
       </div>
     </div>
+    </Section>
   );
 }

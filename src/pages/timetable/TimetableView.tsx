@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Clock, BookOpen, Loader2 } from 'lucide-react';
+import { Clock, BookOpen } from 'lucide-react';
 import type { Weekday, TimetableSlot } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { Section } from '../../components/loading/Section';
 
 const DAYS: Weekday[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -28,6 +29,7 @@ export function TimetableView() {
   const [activeDay, setActiveDay] = useState<Weekday>(TODAY);
   const [slots, setSlots] = useState<TimetableSlot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTimetable = async () => {
@@ -36,6 +38,8 @@ export function TimetableView() {
         return;
       }
       try {
+        setLoading(true);
+        setError(null);
         const q = query(collection(db, 'timetables'), where('classId', '==', user.classId));
         const snap = await getDocs(q);
         let allSlots: TimetableSlot[] = [];
@@ -48,6 +52,7 @@ export function TimetableView() {
         setSlots(allSlots);
       } catch (err) {
         console.error("Error fetching timetable:", err);
+        setError("Failed to load timetable. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -63,39 +68,43 @@ export function TimetableView() {
     .filter(s => s.day === TODAY && s.startTime >= now && s.subject !== 'Break')
     .sort((a, b) => a.startTime.localeCompare(b.startTime))[0];
 
+  const emptyState = (
+    <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+      <p className="text-slate-500">No timetable available yet. Contact your class teacher.</p>
+    </div>
+  );
+
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">My Timetable</h1>
-        <p className="text-slate-600">
-          {user?.classId ? user.classId.toUpperCase() : 'No class assigned'} · Stream · Academic Year 2025/2026
-        </p>
-      </div>
-
-      {/* Next up banner */}
-      {nextSubject && activeDay === TODAY && (
-        <div className="mb-6 bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-center gap-4">
-          <div className="p-3 bg-primary text-white rounded-xl shrink-0">
-            <BookOpen className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs text-primary font-semibold uppercase tracking-wide">Next Up</p>
-            <p className="font-bold text-slate-800">{nextSubject.subject}</p>
-            <p className="text-sm text-slate-500">{nextSubject.startTime} – {nextSubject.endTime} · {nextSubject.teacherName} · {nextSubject.room}</p>
-          </div>
-        </div>
-      )}
-
-      {loading ? (
-        <div className="flex justify-center items-center h-48">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        </div>
-      ) : slots.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-          <p className="text-slate-500">No timetable available yet. Contact your class teacher.</p>
-        </div>
-      ) : (
+    <Section
+      sectionName="My Timetable"
+      loading={loading}
+      error={error}
+      emptyState={emptyState}
+      isEmpty={slots.length === 0 && !loading && !error}
+    >
+      {slots.length > 0 && (
         <>
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-slate-800">My Timetable</h1>
+            <p className="text-slate-600">
+              {user?.classId ? user.classId.toUpperCase() : 'No class assigned'} · Stream · Academic Year 2025/2026
+            </p>
+          </div>
+
+          {/* Next up banner */}
+          {nextSubject && activeDay === TODAY && (
+            <div className="mb-6 bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-center gap-4">
+              <div className="p-3 bg-primary text-white rounded-xl shrink-0">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs text-primary font-semibold uppercase tracking-wide">Next Up</p>
+                <p className="font-bold text-slate-800">{nextSubject.subject}</p>
+                <p className="text-sm text-slate-500">{nextSubject.startTime} – {nextSubject.endTime} · {nextSubject.teacherName} · {nextSubject.room}</p>
+              </div>
+            </div>
+          )}
+
           {/* Day tabs */}
           <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-6 overflow-x-auto">
             {DAYS.map(day => (
@@ -169,6 +178,6 @@ export function TimetableView() {
           )}
         </>
       )}
-    </div>
+    </Section>
   );
 }

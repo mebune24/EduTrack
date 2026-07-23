@@ -3,6 +3,7 @@ import { Medal, TrendingUp, Users, Loader2 } from 'lucide-react';
 import type { StudentResult } from '../../types';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { Section } from '../../components/loading/Section';
 
 const MEDAL_COLORS = ['text-amber-500', 'text-slate-400', 'text-amber-700'];
 
@@ -11,6 +12,7 @@ export function ClassRanking() {
   const [selectedTerm, setSelectedTerm] = useState('Term 2');
   const [rankings, setRankings] = useState<(StudentResult & { position: number })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchRankings = async () => {
@@ -32,6 +34,7 @@ export function ClassRanking() {
         setRankings(rankedResults);
       } catch (err) {
         console.error('Error fetching rankings', err);
+        setError('Failed to load rankings. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -43,12 +46,13 @@ export function ClassRanking() {
   const top3 = rankings.slice(0, 3);
 
   return (
-    <div>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Class Rankings</h1>
-          <p className="text-slate-600">Academic performance leaderboard.</p>
-        </div>
+    <Section sectionName="Class Rankings" loading={loading} error={error} onRetry={() => {}}>
+      <div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Class Rankings</h1>
+            <p className="text-slate-600">Academic performance leaderboard.</p>
+          </div>
         <div className="flex gap-3">
           <select className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white" value={selectedClass} onChange={e => setSelectedClass(e.target.value)}>
             <option value="form1">Form 1</option>
@@ -143,6 +147,7 @@ export function ClassRanking() {
           </table>
         )}
       </div>
-    </div>
+      </div>
+    </Section>
   );
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MessageSquare, Plus, Clock, CheckCircle2, AlertCircle, Search, ChevronRight, Send, X } from 'lucide-react';
 import type { Complaint, ComplaintCategory, ComplaintPriority, ComplaintStatus } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { Section } from '../../components/loading/Section';
 
 // ─── Seed data ────────────────────────────────────────────────────────────────
 const SEED_COMPLAINTS: Complaint[] = [
@@ -123,12 +124,13 @@ export function ComplaintsHub() {
   };
 
   return (
-    <div>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Complaints & Support</h1>
-          <p className="text-slate-600">{isStaff ? 'Manage incoming tickets.' : 'Submit and track your complaints.'}</p>
-        </div>
+    <Section sectionName="Complaints & Support" loading={false} error={null}>
+      <div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Complaints & Support</h1>
+            <p className="text-slate-600">{isStaff ? 'Manage incoming tickets.' : 'Submit and track your complaints.'}</p>
+          </div>
         <button
           onClick={() => setShowNewModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm font-medium"
@@ -354,6 +356,7 @@ export function ComplaintsHub() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </Section>
   );
 }
