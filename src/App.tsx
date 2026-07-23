@@ -37,6 +37,10 @@ function App() {
             <Route element={<ProtectedRoute allowedRoles={['admin', 'bursar']} />}>
               <Route path="approvals" element={<RegistrationApprovals />} />
               <Route path="fee-structures" element={<FeeStructureAdmin />} />
+            </Route>
+
+            {/* Classes: admin/bursar manage, teacher/student/parent view */}
+            <Route element={<ProtectedRoute allowedRoles={['admin', 'bursar', 'teacher', 'student', 'parent']} />}>
               <Route path="classes" element={<ClassManagement />} />
               <Route path="classes/:classId/streams/:streamId" element={<ClassRegister />} />
             </Route>

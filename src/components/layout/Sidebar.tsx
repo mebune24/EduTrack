@@ -14,7 +14,7 @@ const navItems: { icon: any; label: string; path: string; allowedRoles?: Role[] 
   { icon: Users, label: 'My Children', path: '/my-children', allowedRoles: ['parent'] },
   { icon: FileText, label: 'New Admission', path: '/apply', allowedRoles: ['parent', 'student'] },
   { icon: CheckSquare, label: 'Approvals', path: '/approvals', allowedRoles: ['admin', 'bursar'] },
-  { icon: Users, label: 'Classes', path: '/classes', allowedRoles: ['admin', 'bursar', 'teacher'] },
+  { icon: BookOpen, label: 'Classes', path: '/classes', allowedRoles: ['admin', 'bursar', 'teacher', 'student', 'parent'] },
   { icon: CreditCard, label: 'Fee Structures', path: '/fee-structures', allowedRoles: ['admin', 'bursar'] },
   { icon: CreditCard, label: 'Fees & Payments', path: '/fees', allowedRoles: ['admin', 'student', 'bursar', 'parent'] },
   { icon: Award, label: 'Results', path: '/results', allowedRoles: ['admin', 'student', 'teacher', 'bursar', 'parent'] },

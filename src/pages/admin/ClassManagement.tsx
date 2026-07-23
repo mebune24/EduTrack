@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { type SchoolClass } from '../../types';
 import { BookOpen, Plus, Edit2, Trash2, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Mock data for initial development (would come from Firestore)
 const initialClasses: SchoolClass[] = [
@@ -71,7 +72,9 @@ const initialClasses: SchoolClass[] = [
 ];
 
 export function ClassManagement() {
+  const { user } = useAuth();
   const [classes] = useState<SchoolClass[]>(initialClasses);
+  const canManage = user?.role === 'admin' || user?.role === 'bursar';
 
   return (
     <div>
@@ -80,10 +83,12 @@ export function ClassManagement() {
           <h1 className="text-2xl font-bold text-slate-800">Class Management</h1>
           <p className="text-slate-600">Configure academic classes and streams.</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" />
-          <span>New Class</span>
-        </button>
+        {canManage && (
+          <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+            <Plus className="w-4 h-4" />
+            <span>New Class</span>
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -96,22 +101,26 @@ export function ClassManagement() {
                 </div>
                 <h2 className="text-lg font-bold text-slate-800">{schoolClass.category}</h2>
               </div>
-              <div className="flex gap-2">
-                <button className="p-1.5 text-slate-400 hover:text-primary transition-colors">
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button className="p-1.5 text-slate-400 hover:text-destructive transition-colors">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+              {canManage && (
+                <div className="flex gap-2">
+                  <button className="p-1.5 text-slate-400 hover:text-primary transition-colors">
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button className="p-1.5 text-slate-400 hover:text-destructive transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="p-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-sm font-semibold text-slate-700">Streams</h3>
-                <button className="text-xs text-primary hover:underline font-medium flex items-center gap-1">
-                  <Plus className="w-3 h-3" /> Add Stream
-                </button>
+                {canManage && (
+                  <button className="text-xs text-primary hover:underline font-medium flex items-center gap-1">
+                    <Plus className="w-3 h-3" /> Add Stream
+                  </button>
+                )}
               </div>
 
               <div className="space-y-3">
