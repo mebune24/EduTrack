@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { CreditCard, CheckCircle2, Clock, Smartphone, Banknote, Wallet, Loader2 } from 'lucide-react';
+import { CreditCard, CheckCircle2, Clock, Smartphone, Banknote, Wallet } from 'lucide-react';
 import type { FeeStructure, PaymentMethod, PaymentTransaction } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
 function formatCFA(amount: number) {
@@ -32,10 +32,10 @@ export function StudentFeeView() {
       if (!user?.id) return;
       try {
         setLoading(true);
-        const [paymentsSnap, usersSnap] = await Promise.all([
-          getDocs(query(collection(db, 'payments'), where('studentId', '==', user.id))),
-          getDocs(query(collection(db, 'users'), where('__name__', '==', user.id))),
-        ]);
+      const [paymentsSnap, userDoc] = await Promise.all([
+        getDocs(query(collection(db, 'payments'), where('studentId', '==', user.id))),
+        getDoc(doc(db, 'users', user.id)),
+      ]);
 
         const txns: PaymentTransaction[] = [];
         paymentsSnap.forEach(doc => {
@@ -43,11 +43,8 @@ export function StudentFeeView() {
         });
         setTransactions(txns);
 
-        let userClassId: string | undefined;
-        usersSnap.forEach(doc => {
-          const data = doc.data();
-          userClassId = data.classId;
-        });
+        const userData = userDoc.data();
+        const userClassId = userData?.classId;
 
         if (userClassId) {
           const feeSnaps = await getDocs(collection(db, 'feeStructures'));

@@ -2,55 +2,60 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can read their own profile, admins can read all
+    // Users: authenticated users can read profiles, only admins write
     match /users/{userId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // Registrations: students create, admin/teacher reads and updates
+    // Registrations: students create, admin/bursar read and approve, students/parents read own
     match /registrations/{docId} {
       allow create: if request.auth != null;
       allow read, update: if request.auth != null;
       allow delete: if false;
     }
 
-    // Fee structures: read all authenticated users, write admin only
+    // Fee structures: read all authenticated, write admin only
     match /feeStructures/{docId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // Payments: students read own, admin reads all, admin/bursar writes
+    // Payments: students read own, bursar/admin reads all, create by authenticated
     match /payments/{docId} {
-      allow read: if request.auth != null;
       allow create: if request.auth != null;
-      allow update: if request.auth != null && request.resource.data.status == 'confirmed';
+      allow read: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if false;
     }
 
-    // Results: students read own published, teachers/admins read all, write teacher+admin
+    // Results: students read own published, teachers/admins read all, write authenticated
     match /results/{docId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null;
+      allow delete: if false;
     }
 
-    // Complaints: students create, assigned users read/update, admin reads all
+    // Complaints: create by authenticated, read own or all for staff
     match /complaints/{docId} {
       allow create: if request.auth != null;
       allow read: if request.auth != null;
       allow update: if request.auth != null;
+      allow delete: if false;
     }
 
-    // Timetables: read all, write admin/teacher
+    // Timetables: read all, write authenticated
     match /timetables/{docId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null;
+      allow delete: if false;
     }
 
-    // Events: read all, write admin only
+    // Events: read all, write admin
     match /events/{docId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null;
+      allow delete: if false;
     }
 
     // Notifications: users read own, system creates

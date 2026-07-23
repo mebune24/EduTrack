@@ -45,7 +45,7 @@ const db = getFirestore(app);
 async function seed() {
   console.log('Seeding Firestore...\n');
 
-  const now = new Date().toISOString();
+  const _ = new Date().toISOString();
 
   // ─── USERS ────────────────────────────────────────────────────────────────
   const users = [
@@ -53,8 +53,10 @@ async function seed() {
     { firstName: 'Bursar', lastName: 'User', email: 'bursar@edutrack.com', role: 'bursar', status: 'active', classId: '' },
     { firstName: 'Registrar', lastName: 'User', email: 'registrar@edutrack.com', role: 'teacher', status: 'active', classId: '' },
     { firstName: 'Teacher', lastName: 'User', email: 'teacher@edutrack.com', role: 'teacher', status: 'active', classId: '' },
-    { firstName: 'Parent', lastName: 'User', email: 'parent@edutrack.com', role: 'parent', status: 'active', classId: '' },
-    { firstName: 'John', lastName: 'Doe', email: 'student@edutrack.com', role: 'student', status: 'active', classId: 'form1' },
+    { firstName: 'Parent', lastName: 'One', email: 'parent@edutrack.com', role: 'parent', status: 'active', classId: '' },
+    { firstName: 'Jane', lastName: 'Doe', email: 'student1@edutrack.com', role: 'student', status: 'active', classId: 'form1', parentId: 'parent1' },
+    { firstName: 'John', lastName: 'Doe', email: 'student2@edutrack.com', role: 'student', status: 'active', classId: 'form2', parentId: 'parent1' },
+    { firstName: 'Alice', lastName: 'Mbah', email: 'student3@edutrack.com', role: 'student', status: 'active', classId: 'form3', parentId: 'parent1' },
   ];
 
   const userIds: Record<string, string> = {};
@@ -71,30 +73,44 @@ async function seed() {
   const registrations = [
     {
       firstName: 'Jane',
-      lastName: 'Smith',
+      lastName: 'Doe',
       dateOfBirth: '2010-05-15',
       gender: 'female',
       previousSchool: 'Greenfield Primary',
       classAppliedFor: 'form1',
-      parentName: 'Sarah Smith',
+      parentName: 'Parent One',
       parentEmail: 'parent@edutrack.com',
       parentPhone: '+237 670 000 001',
       address: '123 Main St, Yaoundé',
-      status: 'pending',
+      status: 'active',
       createdAt: serverTimestamp(),
     },
     {
-      firstName: 'Michael',
-      lastName: 'Johnson',
-      dateOfBirth: '2009-03-22',
+      firstName: 'John',
+      lastName: 'Doe',
+      dateOfBirth: '2009-08-22',
       gender: 'male',
       previousSchool: 'Sunrise Academy',
       classAppliedFor: 'form2',
-      parentName: 'Robert Johnson',
-      parentEmail: 'parent2@edutrack.com',
-      parentPhone: '+237 670 000 002',
-      address: '456 Oak Ave, Douala',
-      status: 'pending',
+      parentName: 'Parent One',
+      parentEmail: 'parent@edutrack.com',
+      parentPhone: '+237 670 000 001',
+      address: '123 Main St, Yaoundé',
+      status: 'active',
+      createdAt: serverTimestamp(),
+    },
+    {
+      firstName: 'Alice',
+      lastName: 'Mbah',
+      dateOfBirth: '2008-03-10',
+      gender: 'female',
+      previousSchool: 'Hope Baptist',
+      classAppliedFor: 'form3',
+      parentName: 'Parent One',
+      parentEmail: 'parent@edutrack.com',
+      parentPhone: '+237 670 000 001',
+      address: '123 Main St, Yaoundé',
+      status: 'active',
       createdAt: serverTimestamp(),
     },
   ];
@@ -141,8 +157,8 @@ async function seed() {
   // ─── PAYMENTS ─────────────────────────────────────────────────────────────
   const payments = [
     {
-      studentId: userIds['student@edutrack.com'],
-      studentName: 'John Doe',
+      studentId: userIds['student1@edutrack.com'],
+      studentName: 'Jane Doe',
       feeStructureId: 'form1-2025-2026-Term1',
       amountPaid: 100000,
       method: 'momo',
@@ -152,8 +168,8 @@ async function seed() {
       confirmedAt: serverTimestamp(),
     },
     {
-      studentId: userIds['student@edutrack.com'],
-      studentName: 'John Doe',
+      studentId: userIds['student1@edutrack.com'],
+      studentName: 'Jane Doe',
       feeStructureId: 'form1-2025-2026-Term1',
       amountPaid: 85000,
       method: 'orange_money',
@@ -171,8 +187,8 @@ async function seed() {
   // ─── RESULTS ──────────────────────────────────────────────────────────────
   const results = [
     {
-      studentId: userIds['student@edutrack.com'],
-      studentName: 'John Doe',
+      studentId: userIds['student1@edutrack.com'],
+      studentName: 'Jane Doe',
       classId: 'form1',
       streamId: 'A',
       academicYear: '2025/2026',
@@ -192,8 +208,8 @@ async function seed() {
       publishedAt: serverTimestamp(),
     },
     {
-      studentId: userIds['student@edutrack.com'],
-      studentName: 'John Doe',
+      studentId: userIds['student1@edutrack.com'],
+      studentName: 'Jane Doe',
       classId: 'form1',
       streamId: 'A',
       academicYear: '2025/2026',
@@ -207,6 +223,47 @@ async function seed() {
       teacherId: userIds['teacher@edutrack.com'],
       status: 'draft',
       createdAt: serverTimestamp(),
+    },
+    {
+      studentId: userIds['student2@edutrack.com'],
+      studentName: 'John Doe',
+      classId: 'form2',
+      streamId: 'A',
+      academicYear: '2025/2026',
+      term: 'Term 1',
+      scores: [
+        { subjectId: 'math', subjectName: 'Mathematics', caScore: 28, examScore: 60, total: 88, grade: 'A', remark: 'Excellent' },
+        { subjectId: 'eng', subjectName: 'English', caScore: 25, examScore: 55, total: 80, grade: 'A', remark: 'Excellent' },
+      ],
+      totalMarks: 168,
+      average: 84.0,
+      rank: 1,
+      totalStudents: 40,
+      teacherId: userIds['teacher@edutrack.com'],
+      status: 'published',
+      createdAt: serverTimestamp(),
+      publishedAt: serverTimestamp(),
+    },
+    {
+      studentId: userIds['student3@edutrack.com'],
+      studentName: 'Alice Mbah',
+      classId: 'form3',
+      streamId: 'A',
+      academicYear: '2025/2026',
+      term: 'Term 1',
+      scores: [
+        { subjectId: 'math', subjectName: 'Mathematics', caScore: 22, examScore: 48, total: 70, grade: 'B', remark: 'Very Good' },
+        { subjectId: 'eng', subjectName: 'English', caScore: 20, examScore: 45, total: 65, grade: 'C', remark: 'Good' },
+        { subjectId: 'sci', subjectName: 'Science', caScore: 18, examScore: 42, total: 60, grade: 'C', remark: 'Good' },
+      ],
+      totalMarks: 195,
+      average: 65.0,
+      rank: 15,
+      totalStudents: 42,
+      teacherId: userIds['teacher@edutrack.com'],
+      status: 'published',
+      createdAt: serverTimestamp(),
+      publishedAt: serverTimestamp(),
     },
   ];
 
@@ -224,8 +281,8 @@ async function seed() {
     category: 'academic',
     priority: 'medium',
     status: 'open',
-    submittedBy: userIds['student@edutrack.com'],
-    submitterName: 'John Doe',
+    submittedBy: userIds['student1@edutrack.com'],
+    submitterName: 'Jane Doe',
     submitterRole: 'student',
     messages: [],
     createdAt: serverTimestamp(),
@@ -285,7 +342,7 @@ async function seed() {
   // ─── NOTIFICATIONS ────────────────────────────────────────────────────────
   const notifications = [
     {
-      recipientId: userIds['student@edutrack.com'],
+      recipientId: userIds['student1@edutrack.com'],
       type: 'results_published',
       title: 'Results Published',
       message: 'Your Term 1 results have been published.',
@@ -294,11 +351,20 @@ async function seed() {
       createdAt: serverTimestamp(),
     },
     {
-      recipientId: userIds['student@edutrack.com'],
+      recipientId: userIds['student1@edutrack.com'],
       type: 'payment_confirmed',
       title: 'Payment Confirmed',
       message: 'Your payment of 100,000 XAF has been confirmed.',
       read: true,
+      createdAt: serverTimestamp(),
+    },
+    {
+      recipientId: userIds['parent@edutrack.com'],
+      type: 'results_published',
+      title: 'Jane Doe Results Available',
+      message: 'Jane Doe\'s Term 1 results have been published.',
+      link: '/my-children',
+      read: false,
       createdAt: serverTimestamp(),
     },
   ];

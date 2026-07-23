@@ -9,6 +9,7 @@ export interface User {
   lastName: string;
   status: StudentStatus;
   classId?: string;
+  parentId?: string;
 }
 
 export interface StudentRegistration {

@@ -4,7 +4,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   BarChart, Bar
 } from 'recharts';
-import { Award, TrendingUp, Medal, BookOpen, ChevronDown, Loader2 } from 'lucide-react';
+import { Award, TrendingUp, Medal, BookOpen, ChevronDown } from 'lucide-react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -68,6 +68,33 @@ export function StudentResultView() {
     average: r.average,
     rank: r.rank,
   }));
+
+  const downloadPDF = () => {
+    const printContent = document.getElementById('results-print-area');
+    if (!printContent) return;
+    const win = window.open('', '_blank', 'width=800,height=600');
+    if (!win) return;
+    win.document.write(`
+      <html>
+        <head>
+          <title>Results - ${result.studentName}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 40px; color: #1e293b; }
+            h1 { font-size: 24px; margin-bottom: 4px; }
+            h2 { font-size: 18px; color: #475569; margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #e2e8f0; padding: 10px 12px; text-align: left; font-size: 13px; }
+            th { background: #f1f5f9; font-weight: 600; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+            .meta { text-align: right; font-size: 13px; color: #64748b; }
+          </style>
+        </head>
+        <body>${printContent.innerHTML}</body>
+      </html>
+    `);
+    win.document.close();
+    setTimeout(() => { win.print(); }, 400);
+  };
 
   return (
     <div>
@@ -217,6 +244,62 @@ export function StudentResultView() {
           </table>
         </div>
       </div>
+      <div id="results-print-area" style={{ position: 'absolute', left: '-9999px', top: 0, width: '800px', background: '#fff', padding: '40px' }}>
+      <div className="header">
+        <div>
+          <h1>EduTrack — Academic Results</h1>
+          <h2>{result.studentName} · {result.academicYear} · {result.term}</h2>
+        </div>
+        <div className="meta">
+          <p>Generated: {new Date().toLocaleDateString()}</p>
+          <p>Status: {result.status.toUpperCase()}</p>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>CA (/30)</th>
+            <th>Exam (/70)</th>
+            <th>Total (/100)</th>
+            <th>Grade</th>
+            <th>Remark</th>
+          </tr>
+        </thead>
+        <tbody>
+          {result.scores.map(s => (
+            <tr key={s.subjectId}>
+              <td>{s.subjectName}</td>
+              <td style={{ textAlign: 'center' }}>{s.caScore}</td>
+              <td style={{ textAlign: 'center' }}>{s.examScore}</td>
+              <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{s.total}</td>
+              <td style={{ textAlign: 'center' }}>{s.grade}</td>
+              <td style={{ textAlign: 'center' }}>{s.remark}</td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td style={{ fontWeight: 'bold' }}>Overall</td>
+            <td colSpan={2}></td>
+            <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#2563eb' }}>{result.average.toFixed(1)}%</td>
+            <td style={{ textAlign: 'center' }}>{result.average >= 80 ? 'A' : result.average >= 70 ? 'B' : result.average >= 60 ? 'C' : 'D'}</td>
+            <td style={{ textAlign: 'center', fontWeight: 'bold' }}>Rank {result.rank}/{result.totalStudents}</td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
+
+    <div className="flex justify-end gap-3 mt-4">
+      {result.status === 'published' && (
+        <button
+          onClick={downloadPDF}
+          className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 text-sm font-medium"
+        >
+          Download Results (PDF)
+        </button>
+      )}
+    </div>
+  </div>
   );
 }

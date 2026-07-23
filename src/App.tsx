@@ -33,43 +33,37 @@ function App() {
             {/* Parent/Student Routes */}
             <Route path="apply" element={<StudentRegistrationForm />} />
             
-            {/* Admin Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+            {/* Admin & Bursar Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['admin', 'bursar']} />}>
               <Route path="approvals" element={<RegistrationApprovals />} />
-              <Route path="classes" element={<ClassManagement />} />
-            </Route>
-
-            <Route path="students" element={<div className="p-4">Students Placeholder</div> />}
-            <Route element={<ProtectedRoute allowedRoles={['admin', 'bursar']} />}>
-              <Route path="classes/:classId/streams/:streamId" element={<ClassRegister />} />
-            {/* Admin-only Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['admin', 'bursar']} />}>
               <Route path="fee-structures" element={<FeeStructureAdmin />} />
+              <Route path="classes" element={<ClassManagement />} />
+              <Route path="classes/:classId/streams/:streamId" element={<ClassRegister />} />
             </Route>
 
-            <Route path="fees" element={<StudentFeeView />} />
-            <Route path="results" element={<StudentResultView />} />
+            {/* Student & Parent Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher', 'bursar', 'parent']} />}>
+              <Route path="fees" element={<StudentFeeView />} />
+              <Route path="results" element={<StudentResultView />} />
+            </Route>
+
+            {/* All authenticated routes */}
             <Route path="ranking" element={<ClassRanking />} />
+            <Route path="timetable" element={<TimetableView />} />
+            <Route path="events" element={<EventsCalendar />} />
+            <Route path="complaints" element={<ComplaintsHub />} />
+            <Route path="settings" element={<div className="p-4">Settings Placeholder</div>} />
 
             {/* Teacher routes */}
             <Route element={<ProtectedRoute allowedRoles={['admin', 'teacher']} />}>
               <Route path="score-entry" element={<ScoreEntry />} />
-            </Route>
-
-            <Route path="timetable" element={<TimetableView />} />
-            <Route path="events" element={<EventsCalendar />} />
-            {/* Admin timetable builder */}
-            <Route element={<ProtectedRoute allowedRoles={['admin', 'teacher']} />}>
               <Route path="timetable-admin" element={<TimetableAdmin />} />
             </Route>
-            <Route path="complaints" element={<ComplaintsHub />} />
 
             {/* Parent-specific routes */}
             <Route element={<ProtectedRoute allowedRoles={['parent']} />}>
               <Route path="my-children" element={<ParentalDashboard />} />
             </Route>
-
-            <Route path="settings" element={<div className="p-4">Settings Placeholder</div>} />
           </Route>
         </Route>
       </Routes>

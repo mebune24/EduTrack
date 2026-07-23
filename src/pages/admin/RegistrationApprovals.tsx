@@ -34,19 +34,29 @@ export function RegistrationApprovals() {
   const handleApprove = async (id: string, reg: StudentRegistration) => {
     try {
       const docRef = doc(db, 'registrations', id);
+      const matricule = reg.matricule || `MAT-${Date.now().toString().slice(-6)}`;
       await updateDoc(docRef, { 
         status: 'active',
-        matricule: reg.matricule || `MAT-${Date.now().toString().slice(-6)}`
+        matricule,
       });
 
-      // If the student registered an account, update their classId
+      // Try to find matching user account by parent or student info
       const userQuery = query(collection(db, 'users'), where('email', '==', reg.parentEmail));
       const userSnap = await getDocs(userQuery);
       if (!userSnap.empty) {
-        const userData = userSnap.docs[0];
-        await updateDoc(userData.ref, { 
-          classId: reg.classAppliedFor,
-          status: 'active'
+        const parentUser = userSnap.docs[0];
+        await updateDoc(parentUser.ref, { classId: reg.classAppliedFor, status: 'active' });
+      }
+
+      // Create a notification for the parent
+      const { sendNotification } = await import('../../lib/firebase');
+      if (!userSnap.empty) {
+        await sendNotification({
+          recipientId: userSnap.docs[0].id,
+          type: 'registration_approved',
+          title: 'Student Registration Approved',
+          message: `${reg.firstName} ${reg.lastName}'s admission to ${reg.classAppliedFor.toUpperCase()} has been approved. Matricule: ${matricule}`,
+          link: '/my-children',
         });
       }
 

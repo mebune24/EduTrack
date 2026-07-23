@@ -13,23 +13,18 @@ export function ClassRegister() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    // In a real app, we'd query by classId and streamId. 
-    // Here we're fetching active students.
     const fetchStudents = async () => {
       try {
         setLoading(true);
         const q = query(
           collection(db, 'registrations'), 
-          where('status', '==', 'active')
+          where('status', '==', 'active'),
+          where('classAppliedFor', '==', classId)
         );
         const snapshot = await getDocs(q);
         const data: StudentRegistration[] = [];
-        snapshot.forEach(doc => {
-          const student = { id: doc.id, ...doc.data() } as StudentRegistration;
-          // Temporary client-side filter since we don't have deep schema yet
-          if (student.classAppliedFor === classId) {
-            data.push(student);
-          }
+        snapshot.forEach((doc) => {
+          data.push({ id: doc.id, ...doc.data() } as StudentRegistration);
         });
         setStudents(data);
       } catch (err) {
