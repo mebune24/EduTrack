@@ -42,8 +42,11 @@ function App() {
             </Route>
 
             {/* Student & Parent Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher', 'bursar', 'parent']} />}>
+            <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'bursar', 'parent']} />}>
               <Route path="fees" element={<StudentFeeView />} />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRoles={['admin', 'student', 'teacher', 'bursar', 'parent']} />}>
               <Route path="results" element={<StudentResultView />} />
             </Route>
 

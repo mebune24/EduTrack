@@ -3,7 +3,7 @@ import { CreditCard, CheckCircle2, Clock, Smartphone, Banknote, Wallet } from 'l
 import type { FeeStructure, PaymentMethod, PaymentTransaction } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db, sendNotification } from '../../lib/firebase';
 
 function formatCFA(amount: number) {
   return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', minimumFractionDigits: 0 }).format(amount);
@@ -97,6 +97,23 @@ export function StudentFeeView() {
       const ref = await addDoc(collection(db, 'payments'), newTxn);
       setTransactions(prev => [...prev, { ...newTxn, id: ref.id }]);
       setPayStep('success');
+
+      // Notify admin and bursar about the payment
+      try {
+        const usersSnap = await getDocs(query(collection(db, 'users'), where('role', 'in', ['admin', 'bursar'])));
+        const staffNotifications = usersSnap.docs.map(staffDoc =>
+          sendNotification({
+            recipientId: staffDoc.id,
+            type: 'payment_confirmed',
+            title: 'New Payment Received',
+            message: `${newTxn.studentName} paid ${formatCFA(newTxn.amountPaid)} via ${METHOD_CONFIG[newTxn.method].label}. Ref: ${newTxn.reference}`,
+            link: '/fee-structures',
+          })
+        );
+        await Promise.all(staffNotifications);
+      } catch (notifyErr) {
+        console.error('Error sending payment notification to staff:', notifyErr);
+      }
     } catch (err) {
       console.error('Error recording payment:', err);
       setPayStep('select');

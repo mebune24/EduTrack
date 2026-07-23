@@ -53,7 +53,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      {user?.role === 'admin' || user?.role === 'bursar' || user?.role === 'teacher' ? (
+      {user?.role === 'admin' || user?.role === 'bursar' ? (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
             <div className="bg-blue-100 text-blue-600 p-4 rounded-xl"><Users className="w-6 h-6" /></div>
